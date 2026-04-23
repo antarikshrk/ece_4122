@@ -1,1 +1,0 @@
-print("hello world" + " from the trace generator!")
