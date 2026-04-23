@@ -4,19 +4,35 @@ GTID: 903780288
 Class: ECE 4122
 Last Date Modified: 4/23/26
 
-Description: Defines the shared BranchRecord structure used across CPU and GPU modules. Uses bitwise math for Endianness guards.
+Description:
+Defines a compact, GPU-friendly data structure representing a single branch event.
+The struct is explicitly aligned and padded to ensure efficient memory access on
+both CPU and GPU architectures. Includes a utility to correct endianness when
+running on big-endian systems.
 */
 
 #pragma once
 #include <cstdint>
 
-// alignas(16) strictly enforces the 16-byte boundary for GPU cache lines.
+// Enforce 16-byte alignment for optimal GPU memory transactions and cache usage.
 struct alignas(16) BranchRecord
 {
-    uint64_t pc;        // Program counter (branch address)
-    uint8_t outcome;    // 1 = branch taken, 0 = not taken
-    uint8_t padding[7]; // Pads struct to exactly 16 bytes
+    uint64_t pc;        // Program counter (address of the branch instruction)
+    uint8_t outcome;    // Branch outcome: 1 = taken, 0 = not taken
+    uint8_t padding[7]; // Padding to ensure total struct size is exactly 16 bytes
 
+    /*
+    Function: fixEndianness
+
+    Description:
+    Converts the program counter (pc) from big-endian to little-endian format
+    if the system architecture is big-endian. This ensures consistent data
+    interpretation across heterogeneous systems (e.g., CPU ↔ GPU transfers).
+
+    Notes:
+    - No operation is performed on little-endian systems.
+    - Uses bitwise masking and shifting to reverse byte order.
+    */
     inline void fixEndianness()
     {
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
